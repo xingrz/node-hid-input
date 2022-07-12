@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import { BindingFactory, Input } from './binding';
+import binding, { BindingFactory, Input } from './binding';
 import { openMockInput } from './socket';
 
 class HidInputStream extends Readable {
@@ -49,6 +49,14 @@ class HidInputStream extends Readable {
 
 export interface InputOpenOptions {
   exclusive?: boolean;
+}
+
+export function createInput(path: string, options?: InputOpenOptions) {
+  if (binding.openInput) {
+    return new HidInputStream(binding.openInput, path, options);
+  } else {
+    throw new Error(`createInput is not supported on ${process.platform}`);
+  }
 }
 
 export function createMockInput(path: string, options?: InputOpenOptions) {
