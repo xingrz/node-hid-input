@@ -1,4 +1,4 @@
-import { createInput, createMockInput } from './lib/index.js';
+import { createInput, createMockInput, listInputs } from './lib/index.js';
 
 const args = process.argv.slice(2);
 const mock = args.includes('--mock') || args.includes('-m');
@@ -39,4 +39,8 @@ input.on('data', (input) => {
 process.once('SIGINT', () => {
   console.log('-- SIGINT --');
   input.destroy();
+});
+
+process.nextTick(async () => {
+  console.log(await listInputs());
 });

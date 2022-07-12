@@ -1,3 +1,6 @@
+import { constants } from 'fs';
+import { access, readdir, readFile, realpath } from 'fs/promises';
+import { join } from 'path';
 import { Readable } from 'stream';
 import binding, { BindingFactory, Input } from './binding';
 import { openMockInput } from './socket';
@@ -61,4 +64,42 @@ export function createInput(path: string, options?: InputOpenOptions) {
 
 export function createMockInput(path: string, options?: InputOpenOptions) {
   return new HidInputStream(openMockInput, path, options);
+}
+
+export interface InputDevice {
+  path: string;
+  name: string;
+}
+
+const INPUT_CLASS_PATH = '/sys/class/input';
+
+export async function listInputs(): Promise<InputDevice[]> {
+  try {
+    await access(INPUT_CLASS_PATH, constants.F_OK);
+  } catch (e) {
+    return [];
+  }
+
+  const inputs: InputDevice[] = [];
+
+  for (const inputId of await readdir(INPUT_CLASS_PATH)) {
+    if (!inputId.startsWith('input')) continue;
+    const inputNode = join(INPUT_CLASS_PATH, inputId);
+
+    try {
+      const subsystem = await realpath(join(inputNode, 'device', 'subsystem'));
+      if (subsystem != '/sys/bus/hid') continue;
+
+      const eventId = (await readdir(inputNode)).find((name) => name.startsWith('event'));
+      if (!eventId) continue;
+
+      const name = (await readFile(join(inputNode, 'name'), 'utf-8')).trim();
+      if (!name) continue;
+
+      inputs.push({ name, path: `/dev/input/${eventId}` });
+    } catch (ignored) {
+    }
+  }
+
+  return inputs;
 }
