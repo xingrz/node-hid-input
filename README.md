@@ -57,6 +57,52 @@ reader.on('data', (input) => {
 });
 ```
 
+## APIs
+
+### `listInputs()`
+
+* Returns: `Promise<InputDevice[]>`
+  * `path` - `string` Path to the device
+  * `name` - `string` Human readable name of the deivce
+
+List HID input devices available on this machine.
+
+### `createInput(path[, options])`
+
+* `path` - `string`
+* `options` - `Object`
+  * `exclusive` - `boolean` Whether to prevent the device from being opened by other processes before getting closed
+* Returns: `HidInputStream`
+
+Opens an input stream of device `path`. Available devices along with paths can be retrieved with [`listInputs()`](#listinputs).
+
+### `createMockInput(path)`
+
+* `path` - `string`
+* Returns: `HidInputStream`
+
+Opens a mocking stream by listening on a newly created UNIX domain socket `path`.
+
+After the stream is open, you can emulate inputs with `nc -U <path>`.
+
+### Class: `HidInputStream`
+
+* Extends `fs.Readable`
+
+A readable stream in Object mode.
+
+#### Event: `open`
+
+#### Event: `close`
+
+#### Event: `data`
+
+* `input` - `string` Input read from the device
+
+#### `close()`
+
+Close the stream and release any underlying resources.
+
 ## License
 
 [MIT License](LICENSE)
