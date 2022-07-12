@@ -2,14 +2,30 @@
   "name": "hid-input",
   "version": "0.0.0",
   "description": "Node.js binding for reading text inputs on Linux, such as barcode scanners",
+  "main": "lib/index.js",
+  "scripts": {
+    "build:ts": "tsc -p .",
+    "build": "npm run build:ts",
+    "prepublishOnly": "npm run build:ts"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/xingrz/node-hid-input.git"
   },
+  "keywords": [
+    "hid",
+    "input",
+    "barcode"
+  ],
   "author": "XiNGRZ <hi@xingrz.me>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/xingrz/node-hid-input/issues"
   },
-  "homepage": "https://github.com/xingrz/node-hid-input#readme"
+  "homepage": "https://github.com/xingrz/node-hid-input#readme",
+  "devDependencies": {
+    "@tsconfig/node16-strictest": "^1.0.3",
+    "@types/node": "^18.0.3",
+    "typescript": "^4.7.4"
+  }
 }
