@@ -22,6 +22,7 @@ class FdHandle {
     char path[255];
     bool exclusive;
     int fd;
+    char *error;
 };
 
 Value LinuxInput::Open(const CallbackInfo &info) {
@@ -51,7 +52,9 @@ void LinuxInput::AsyncOpen(napi_env env, void *data) {
     auto *baton = static_cast<PromisedAsync<FdHandle> *>(data);
     auto ctx = &baton->context;
     ctx->fd = open(ctx->path, O_RDONLY | O_NONBLOCK);
-    if (ctx->fd && ctx->exclusive) {
+    if (ctx->fd == -1) {
+        ctx->error = strerror(errno);
+    } else if (ctx->exclusive) {
         ioctl(ctx->fd, EVIOCGRAB, 1);
     }
 }
@@ -59,7 +62,7 @@ void LinuxInput::AsyncOpen(napi_env env, void *data) {
 void LinuxInput::FinishAsyncOpen(napi_env env, napi_status status, void *data) {
     auto *baton = static_cast<PromisedAsync<FdHandle> *>(data);
     auto ctx = &baton->context;
-    if (ctx->fd > 0) {
+    if (ctx->fd != -1) {
         auto handle = new FdHandle(*ctx);
         Object result = Object::New(env);
         result.Set(String::New(env, "read"), Function::New<LinuxInput::Read>(env, "read", handle));
@@ -67,7 +70,8 @@ void LinuxInput::FinishAsyncOpen(napi_env env, napi_status status, void *data) {
             String::New(env, "close"), Function::New<LinuxInput::Close>(env, "close", handle));
         baton->Resolve(result);
     } else {
-        baton->Reject(String::New(env, "Failed opening device"));
+        baton->Reject(
+            String::New(env, std::string("Failed opening device: ") + std::string(ctx->error)));
     }
     delete baton;
 }
